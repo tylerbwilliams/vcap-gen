@@ -1,0 +1,17 @@
+{
+  "name": "vcap-gen",
+  "version": "1.0.0",
+  "description": "Secure Credential Generator",
+  "preferGlobal": true,
+  "bin": "./index.js",
+  "engines": {
+    "node": ">4.0.0"
+  },
+  "author": "Tyler Williams",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^1.5.2",
+    "inquirer": "^0.11.3",
+    "async": "^1.5.2"
+  }
+}
