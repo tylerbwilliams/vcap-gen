@@ -6,11 +6,14 @@ const fs = require('fs');
 const https = require('https');
 const url = require('url');
 const util = require('util');
+const path = require('path');
 
 const async = require('async');
 const inquirer = require('inquirer');
 
-const services = require('./services.json');
+const location = path.resolve( process.cwd(), './services.json' );
+
+const services = require( location );
 
 const questions = [
 	{	'message': 'API >',
