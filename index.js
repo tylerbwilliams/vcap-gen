@@ -120,6 +120,7 @@ inquirer.prompt( questions, fields => {
 								})[0];
 								
 								const INSTANCE_URL = resource['entity']['service_instances_url'];
+								const APPS_URL = resource['entity']['apps_url'];
 								
 								const getAllServices = Object.keys( services ).map( service => {
 									
@@ -130,7 +131,6 @@ inquirer.prompt( questions, fields => {
 											return function getInstance( done ) {
 												
 												const name = instance.name;
-												const credential = instance.credential;
 												
 												const instanceQuery = [
 													'q=name:'+ name
@@ -149,34 +149,97 @@ inquirer.prompt( questions, fields => {
 													const resource = res['resources'][0];
 													
 													const KEY_URL = resource['entity']['service_keys_url'];
+													const BINDING_URL = resource['entity']['service_bindings_url'];
 													
-													const keyQuery = [
-														'q=name:'+ credential
-													].join('&');
-													const getKey = {
-														'auth': `${TOKEN_AUTH}`,
-														'uri': `${PAAS_HOST}${KEY_URL}?${keyQuery}`
-													};
-													request( getKey, ( err, res )=> {
+													const type = instance.type;
+													
+													if ( type === "service-key" ) {
 														
-														if ( err ) throw err;
+														const key = instance.key;
 														
-														if ( res['total_results'] == 0 ) throw new Error('No Credential Found.');
-														
-														if ( res['total_results'] > 1 ) throw new Error('Multiple Credentials Found.');
-														
-														const resource = res['resources'][0];
-														
-														const credentials = resource['entity']['credentials'];
-														
-														const instance = {
-															"name": name,
-															"label": service,
-															"credentials": credentials
+														const keyQuery = [
+															'q=name:'+ key
+														].join('&');
+														const getKey = {
+															'auth': `${TOKEN_AUTH}`,
+															'uri': `${PAAS_HOST}${KEY_URL}?${keyQuery}`
 														};
+														request( getKey, ( err, res )=> {
+															
+															if ( err ) throw err;
+															
+															if ( res['total_results'] == 0 ) throw new Error('No Credential Found.');
+															
+															if ( res['total_results'] > 1 ) throw new Error('Multiple Credentials Found.');
+															
+															const resource = res['resources'][0];
+															
+															const credentials = resource['entity']['credentials'];
+															
+															const instance = {
+																"name": name,
+																"label": service,
+																"credentials": credentials
+															};
+															
+															done( null, instance )
+														});
+													}
+													else if ( type === "binding" ) {
 														
-														done( null, instance )
-													});
+														const app = instance.app;
+														
+														const appQuery = [
+															'q=name:'+ app
+														].join('&');
+														const getApp = {
+															'auth': `${TOKEN_AUTH}`,
+															'uri': `${PAAS_HOST}${APPS_URL}?${appQuery}`
+														};
+														request( getApp, ( err, res )=> {
+															
+															if ( err ) throw err;
+															
+															if ( res['total_results'] == 0 ) throw new Error('No Application Found.');
+															
+															if ( res['total_results'] > 1 ) throw new Error('Multiple Applications Found.');
+															
+															const resource = res['resources'][0];
+															
+															const APP_GUID = resource['metadata']['guid'];
+															
+															const bindQuery = [
+																'q=app_guid:'+ APP_GUID
+															].join('&');
+															const getBinding = {
+																'auth': `${TOKEN_AUTH}`,
+																'uri': `${PAAS_HOST}${BINDING_URL}?${bindQuery}`
+															};
+															request( getBinding, ( err, res )=> {
+																
+																if ( err ) throw err;
+																
+																if ( res['total_results'] == 0 ) throw new Error('No Binding Found.');
+																
+																if ( res['total_results'] > 1 ) throw new Error('Multiple Bindings Found.');
+																
+																const resource = res['resources'][0];
+																
+																const credentials = resource['entity']['credentials'];
+																
+																const instance = {
+																	"name": name,
+																	"label": service,
+																	"credentials": credentials
+																};
+																
+																done( null, instance )
+															});
+														});
+													}
+													else {
+														throw new Error('Type missing or invalid.');
+													}
 												});
 											};
 										});

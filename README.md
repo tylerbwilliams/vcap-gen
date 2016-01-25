@@ -17,13 +17,23 @@ Create a services definition file, named `services.json`.
 	"service-name": [
 		{
 			"name": "instance-name",
-			"credential": "instance service key name"
+			"type": "service-key | binding",
+			"key": "service key name",
+			"app": "application name"
 		}
 	]
 }
 ```
 
 You can include multiple services, and multiple instances per service.
+
+The `type` parameter determines whether to retrieve an unbound service key
+or an application-bound service key.  It's recommended to give third-parties an
+unbound service key where possible, so it can be deleted and regenerated when
+access needs to be revoked.
+
+- For `type` of `"service-key"`, fill in the `key` parameter.
+- For `type` of `"binding"`, fill in the `app` parameter.
 
 Note: You should include this file in your repository, so new developers can
 quickly get started.
