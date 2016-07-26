@@ -133,20 +133,24 @@ inquirer.prompt( questions, fields => {
 												const name = instance.name;
 												
 												const instanceQuery = [
-													'q=name:'+ name
+													'q=name:' + name
 												].join('&');
 												const getInstance = {
 													'auth': `${TOKEN_AUTH}`,
-													'uri': `${PAAS_HOST}${INSTANCE_URL}?${instanceQuery}`
+													'uri': service === 'user-provided'
+														? `${PAAS_HOST}/v2/user_provided_service_instances`
+														: `${PAAS_HOST}${INSTANCE_URL}?${instanceQuery}`
 												};
 												request( getInstance, ( err, res )=> {
 													if ( err ) throw err;
 													
-													if ( res['total_results'] == 0 ) throw new Error('No Service Found.');
+													const resources = res['resources'].filter( result => result.entity.name === name );
 													
-													if ( res['total_results'] > 1 ) throw new Error('Multiple Services Found.');
+													if ( resources.length == 0 ) throw new Error(`No Service Found: ${name}`);
 													
-													const resource = res['resources'][0];
+													if ( resources.length > 1 ) throw new Error('Multiple Services Found.');
+													
+													const resource = resources[0];
 													
 													const KEY_URL = resource['entity']['service_keys_url'];
 													const BINDING_URL = resource['entity']['service_bindings_url'];
@@ -312,3 +316,45 @@ function request( args, done ) {
 	}
 	req.end();
 }
+
+const doRequest = args =>
+	new Promise(( resolve, reject )=> {
+		const method = args.method || 'GET';
+		const auth = args.auth || null;
+		const uri = args.uri || args.url;
+		const data = args.data || null;
+		const options = url.parse(uri);
+		const encoding = 'application/x-www-form-urlencoded';
+		options['method'] = method;
+		options['headers'] = { };
+		if ( auth ) options['headers']['Authorization'] = auth;
+		if ( data ) options['headers']['Content-Type'] = encoding;
+		const req = https.request( options, res => {
+			const chunks = [];
+			DEBUG && console.log(`REQUEST: ${uri}`);
+			DEBUG && console.log(`STATUS: ${res.statusCode}`);
+			DEBUG && console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
+			res.setEncoding('utf8');
+			res.on('data', chunk => chunks.push(chunk));
+			res.on('error', reject );
+			res.on('end', () => {
+				const data = chunks.join('');
+				var json = null;
+				try { json = JSON.parse(data); } catch (ex) { }
+				const result = json || data;
+				DEBUG && console.log(`RESPONSE: ${data}`);
+				resolve( result );
+			});
+		});
+		req.on('error', reject );
+		if ( data ) {
+			const formData = Object.keys(data).map( key => {
+				return key +'='+ data[key];
+			}).join('&');
+			req.write( formData );
+		}
+		req.end();
+	});
+
+const prompt = questions =>
+	new Promise( resolve => inquirer.prompt( questions, resolve ));

@@ -1,13 +1,18 @@
 {
   "name": "vcap-gen",
-  "version": "0.2.0",
-  "description": "Secure Credential Generator",
+  "version": "0.2.1",
+  "description": "Cloud Foundry Secure Credential Generator",
   "preferGlobal": true,
   "bin": "./index.js",
   "engines": {
     "node": ">4.0.0"
   },
-  "author": "Tyler Williams",
+  "author": "Tyler Williams <> ()",
+  "contributers": [ ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tylerbwilliams/vcap-gen.git"
+  },
   "license": "ISC",
   "dependencies": {
     "async": "^1.5.2",
