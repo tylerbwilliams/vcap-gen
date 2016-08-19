@@ -119,6 +119,8 @@ inquirer.prompt( questions, fields => {
 									return resource.entity.name == SPACE;
 								})[0];
 								
+								const SERVICE_GUID = resource.metadata.guid;
+								
 								const INSTANCE_URL = resource['entity']['service_instances_url'];
 								const APPS_URL = resource['entity']['apps_url'];
 								
@@ -144,7 +146,9 @@ inquirer.prompt( questions, fields => {
 												request( getInstance, ( err, res )=> {
 													if ( err ) throw err;
 													
-													const resources = res['resources'].filter( result => result.entity.name === name );
+													const resources = res['resources']
+														.filter( result => result.entity.name === name )
+														.filter( result => result.entity.space_guid === SERVICE_GUID );
 													
 													if ( resources.length == 0 ) throw new Error(`No Service Found: ${name}`);
 													
