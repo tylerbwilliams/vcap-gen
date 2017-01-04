@@ -1,6 +1,6 @@
 {
   "name": "vcap-gen",
-  "version": "0.2.3",
+  "version": "1.0.0",
   "description": "Cloud Foundry Secure Credential Generator",
   "preferGlobal": true,
   "bin": "./index.js",
