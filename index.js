@@ -70,7 +70,7 @@ inquirer.prompt( questions, fields => {
 					'auth': `${TOKEN_AUTH}`,
 					'uri': `${PAAS_HOST}${ORG_URL}`
 				};
-				request( getOrgs, ( err, res )=> {
+				getResources( getOrgs, ( err, res )=> {
 					if ( err ) throw err;
 					
 					if ( res['total_results'] == 0 ) throw new Error('No Orgs Found.');
@@ -98,7 +98,7 @@ inquirer.prompt( questions, fields => {
 							'auth': `${TOKEN_AUTH}`,
 							'uri': `${PAAS_HOST}${SPACE_URL}`
 						};
-						request( getSpaces, ( err, res )=> {
+						getResources( getSpaces, ( err, res )=> {
 							if ( err ) throw err;
 							
 							if ( res['total_results'] == 0 ) throw new Error('No Spaces Found.');
@@ -143,7 +143,7 @@ inquirer.prompt( questions, fields => {
 														? `${PAAS_HOST}/v2/user_provided_service_instances`
 														: `${PAAS_HOST}${INSTANCE_URL}?${instanceQuery}`
 												};
-												request( getInstance, ( err, res )=> {
+												getResources( getInstance, ( err, res )=> {
 													if ( err ) throw err;
 													
 													const resources = res['resources']
@@ -172,7 +172,7 @@ inquirer.prompt( questions, fields => {
 															'auth': `${TOKEN_AUTH}`,
 															'uri': `${PAAS_HOST}${KEY_URL}?${keyQuery}`
 														};
-														request( getKey, ( err, res )=> {
+														getResources( getKey, ( err, res )=> {
 															
 															if ( err ) throw err;
 															
@@ -204,7 +204,7 @@ inquirer.prompt( questions, fields => {
 															'auth': `${TOKEN_AUTH}`,
 															'uri': `${PAAS_HOST}${APPS_URL}?${appQuery}`
 														};
-														request( getApp, ( err, res )=> {
+														getResources( getApp, ( err, res )=> {
 															
 															if ( err ) throw err;
 															
@@ -223,7 +223,7 @@ inquirer.prompt( questions, fields => {
 																'auth': `${TOKEN_AUTH}`,
 																'uri': `${PAAS_HOST}${BINDING_URL}?${bindQuery}`
 															};
-															request( getBinding, ( err, res )=> {
+															getResources( getBinding, ( err, res )=> {
 																
 																if ( err ) throw err;
 																
@@ -320,6 +320,27 @@ function request( args, done ) {
 	}
 	req.end();
 }
+
+const getResources = ( options, callback )=> {
+	const baseURL = options.uri.split('/v')[0];
+	const sendRequest = ( uri, resources )=> {
+		const nextOptions = Object.assign({}, options, { 'uri': uri });
+		request( nextOptions, ( err, res )=> {
+			if ( err ) {
+				console.log( nextOptions );
+				console.error( err );
+				return callback( err, res );
+			}
+			const nextURL = res['next_url'];
+			const combined = resources.concat( res['resources'] );
+			if ( nextURL )
+				return sendRequest( baseURL + nextURL, combined );
+			res['resources'] = combined;
+			return callback( err, res );
+		});
+	};
+	sendRequest( options.uri, []);
+};
 
 const doRequest = args =>
 	new Promise(( resolve, reject )=> {
